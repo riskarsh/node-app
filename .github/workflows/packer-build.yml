@@ -34,7 +34,7 @@ jobs:
         run: packer init .
 
       - name: Validate Packer template
-        run: packer validate packer.json
+        run: packer validate packer.pkr.json
 
       - name: Build AMI
-        run: packer build packer.json
+        run: packer build packer.pkr.json
