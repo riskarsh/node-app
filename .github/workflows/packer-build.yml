@@ -34,7 +34,7 @@ jobs:
         run: packer init .
 
       - name: Validate Packer template
-        run: packer validate packer.pkr.json
+        run: packer validate -var="aws_region=${{ vars.AWS_REGION }}" packer.pkr.json
 
       - name: Build AMI
         run: packer build -var="aws_region=${{ vars.AWS_REGION }}" packer.pkr.json
