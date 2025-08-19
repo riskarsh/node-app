@@ -1,3 +1,4 @@
+
 {
   "packer": {
     "required_plugins": {
@@ -7,33 +8,42 @@
       }
     }
   },
-  "builders": [
-    {
-      "type": "amazon-ebs",
-      "region": "us-east-1",
-      "source_ami_filter": {
-        "filters": {
-          "name": "ubuntu/images/hvm-ssd/ubuntu-noble-24.04-amd64-server-*",
-          "root-device-type": "ebs",
-          "virtualization-type": "hvm"
+
+  "source": {
+    "amazon-ebs": {
+      "ubuntu-node-app": {
+        "region": "us-east-1",
+        "source_ami_filter": {
+          "filters": {
+            "name": "ubuntu/images/hvm-ssd/ubuntu-noble-24.04-amd64-server-*",
+            "root-device-type": "ebs",
+            "virtualization-type": "hvm"
+          },
+          "owners": ["099720109477"],
+          "most_recent": true
         },
-        "owners": ["099720109477"],
-        "most_recent": true
-      },
-      "instance_type": "t3.micro",
-      "ssh_username": "ubuntu",
-      "ami_name": "node-app-ubuntu24-{{timestamp}}"
+        "instance_type": "t3.micro",
+        "ssh_username": "ubuntu",
+        "ami_name": "node-app-ubuntu24-{{timestamp}}"
+      }
     }
-  ],
-  "provisioners": [
-    {
-      "type": "file",
-      "source": "./",
-      "destination": "/tmp/app"
-    },
-    {
-      "type": "shell",
-      "script": "scripts/setup.sh"
+  },
+
+  "build": {
+    "node-app-ami": {
+      "sources": ["source.amazon-ebs.ubuntu-node-app"],
+
+      "provisioner": [
+        {
+          "type": "file",
+          "source": "./",
+          "destination": "/tmp/app"
+        },
+        {
+          "type": "shell",
+          "script": "scripts/setup.sh"
+        }
+      ]
     }
-  ]
+  }
 }
