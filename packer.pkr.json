@@ -1,4 +1,3 @@
-
 {
   "packer": {
     "required_plugins": {
@@ -30,20 +29,18 @@
   },
 
   "build": {
-    "node-app-ami": {
-      "sources": ["source.amazon-ebs.ubuntu-node-app"],
+    "sources": ["source.amazon-ebs.ubuntu-node-app"],
 
-      "provisioner": [
-        {
-          "type": "file",
-          "source": "./",
-          "destination": "/tmp/app"
-        },
-        {
-          "type": "shell",
-          "script": "scripts/setup.sh"
-        }
-      ]
-    }
+    "provisioner": [
+      {
+        "type": "file",
+        "source": "./",
+        "destination": "/tmp/app"
+      },
+      {
+        "type": "shell",
+        "script": "scripts/setup.sh"
+      }
+    ]
   }
 }
