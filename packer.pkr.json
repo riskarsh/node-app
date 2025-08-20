@@ -40,9 +40,16 @@
 
     "provisioner": [
       {
+        "shell": {
+          "inline": [
+            "mkdir -p /home/ubuntu/node-app"
+          ]
+        }
+      },
+      {
         "file": {
           "source": "./",
-          "destination": "/home/ubuntu/node-app/"
+          "destination": "/home/ubuntu/node-app"
         }
       },
       {
