@@ -42,7 +42,7 @@
       {
         "file": {
           "source": "./",
-          "destination": "/tmp/app"
+          "destination": "/home/ubuntu/node-app/"
         }
       },
       {

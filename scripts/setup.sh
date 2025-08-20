@@ -21,26 +21,21 @@ sudo apt-get install -y nodejs
 echo "Installing PM2 globally..."
 sudo npm install -g pm2
 
-# --- Setup Application Directory ---
-echo "Setting up application directory at ${APP_DIR}..."
+# --- Ensure Application Directory Exists ---
+echo "Ensuring application directory exists at ${APP_DIR}..."
 sudo mkdir -p "${APP_DIR}"
-sudo cp -r /tmp/app/* "${APP_DIR}/"
-
-# --- Install Application Dependencies ---
-echo "Installing application dependencies as root..."
 cd "${APP_DIR}"
 
-sudo npm  install
+# --- Install Application Dependencies ---
+echo "Installing application dependencies..."
+sudo npm install
 
-echo "Configuring PM2 to start the application on boot as the root user..."
-# Generate the startup script for the 'root' user.
-# The home path (--hp) for root is /root.
+echo "Configuring PM2 to start the application on boot..."
 sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u root --hp /root
 
-# Start the app via the ecosystem file to register it with PM2
-# Note: No 'sudo -u' is needed as we are running this as root.
+# Start the app via the ecosystem file
 sudo pm2 start ecosystem.config.js
-# Save the current process list so it will be resurrected on reboot
 sudo pm2 save
-sudo pm2 startup 
+#sudo pm2 startup
+
 echo "Provisioning script finished successfully."
