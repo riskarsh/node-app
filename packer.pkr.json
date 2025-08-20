@@ -25,7 +25,7 @@
             "root-device-type": "ebs",
             "virtualization-type": "hvm"
           },
-          "owners": ["099720109477"],
+          "owners": ["amazon"],
           "most_recent": true
         },
         "instance_type": "t3.micro",
