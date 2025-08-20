@@ -42,14 +42,14 @@
       {
         "shell": {
           "inline": [
-            "mkdir -p /home/ubuntu/node-app"
+            "mkdir -p /tmp/app"
           ]
         }
       },
       {
         "file": {
           "source": "./",
-          "destination": "/home/ubuntu/node-app"
+          "destination": "/tmp/app"
         }
       },
       {

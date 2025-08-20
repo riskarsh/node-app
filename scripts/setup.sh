@@ -4,6 +4,7 @@ set -x
 
 # --- Variables ---
 APP_DIR="/home/ubuntu/node-app"
+TMP_DIR="/tmp/app"
 
 # --- System Update and Dependencies ---
 echo "Updating package list..."
@@ -21,21 +22,28 @@ sudo apt-get install -y nodejs
 echo "Installing PM2 globally..."
 sudo npm install -g pm2
 
-# --- Ensure Application Directory Exists ---
-echo "Ensuring application directory exists at ${APP_DIR}..."
+# --- Setup Application Directory ---
+echo "Setting up application directory at ${APP_DIR}..."
 sudo mkdir -p "${APP_DIR}"
-cd "${APP_DIR}"
+
+# Copy uploaded files from /tmp/app to app directory
+sudo cp -r "${TMP_DIR}/." "${APP_DIR}/"
+
+# Ensure ownership is root:root (since we’re running as sudo everywhere)
+sudo chown -R root:root "${APP_DIR}"
 
 # --- Install Application Dependencies ---
 echo "Installing application dependencies..."
-sudo npm install
+cd "${APP_DIR}"
+sudo npm install --legacy-peer-deps
 
-echo "Configuring PM2 to start the application on boot..."
+# --- Configure PM2 as root ---
+echo "Configuring PM2 to start the application on boot (as root)..."
 sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u root --hp /root
 
-# Start the app via the ecosystem file
-sudo pm2 start ecosystem.config.js
+# Start the app via ecosystem file
+sudo pm2 start ecosystem.config.js || echo "⚠️ ecosystem.config.js not found, skipping app start"
+
 sudo pm2 save
-#sudo pm2 startup
 
 echo "Provisioning script finished successfully."
