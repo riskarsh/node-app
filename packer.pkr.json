@@ -57,6 +57,13 @@
           "script": "scripts/setup.sh"
         }
       }
+    ],
+
+    "post-processors": [
+      {
+        "type": "amazon-ami-management",
+        "regions": ["us-east-1", "us-east-2", "us-west-2"]
+      }
     ]
   }
 }

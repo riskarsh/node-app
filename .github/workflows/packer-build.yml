@@ -18,6 +18,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Create .env file
+        run: |
+          cat <<EOF > .env
+          PORT=${{ vars.PORT }}
+          # add more secrets/vars here
+          EOF
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
