@@ -1,0 +1,124 @@
+name: Build & Deploy Node App
+
+on:
+  workflow_dispatch:
+    inputs:
+      first_deploy:
+        description: "Is this the first deployment?"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+  push:
+    branches:
+      - main
+
+jobs:
+  # 1. Build AMIs with Packer
+  packer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Install Packer
+        run: |
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt-get update && sudo apt-get install -y packer
+
+      - name: Build Multi-Region AMIs
+        run: |
+          packer build packer.pkr.json
+          # Collect AMI IDs from manifest.json
+          cat manifest.json
+
+      - name: Save AMI IDs
+        id: ami
+
+        run: |
+          AMI_JSON=$(cat manifest.json | jq -r '.builds[] | {region: .artifact_id | split(":")[0], ami: .artifact_id | split(":")[1]}')
+          echo "ami_list=$AMI_JSON" >> $GITHUB_OUTPUT
+
+  # 2. Deploy regional stacks
+  deploy-regional:
+    needs: packer
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        region: [us-east-1, us-east-2, us-west-1, us-west-2]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          aws-region: ${{ matrix.region }}
+
+      - name: Deploy/Update Regional Stack
+        run: |
+          AMI_ID=$(echo '${{ needs.packer.outputs.ami_list }}' | jq -r ".[] | select(.region==\"${{ matrix.region }}\") | .ami")
+          aws cloudformation deploy \
+            --template-file cfn/app-regional.yml \
+            --stack-name node-app-${{ matrix.region }} \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides AMIId=$AMI_ID
+
+  # 3. Deploy Global CloudFront
+  deploy-global:
+    needs: deploy-regional
+    runs-on: ubuntu-latest
+    if: github.event.inputs.first_deploy == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Deploy Global CloudFront Stack
+        run: |
+          # Fetch ALB DNS names from regional stacks
+          ALBS=$(for r in us-east-1 us-east-2 us-west-1 us-west-2; do
+            dns=$(aws cloudformation describe-stacks --stack-name node-app-$r \
+              --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNS'].OutputValue" \
+              --output text --region $r)
+            echo "$r=$dns"
+          done)
+
+          # Save ALBs into params file
+          echo $ALBS
+
+          aws cloudformation deploy \
+            --template-file cfn/cloudfront-global.yml \
+            --stack-name node-app-global \
+            --capabilities CAPABILITY_NAMED_IAM
+
+  # 4. CloudFront Cache Invalidation
+  invalidate-cache:
+    needs: deploy-regional
+    runs-on: ubuntu-latest
+    if: github.event.inputs.first_deploy == 'false'
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Invalidate CloudFront Cache
+        run: |
+          CF_ID=$(aws cloudformation describe-stacks --stack-name node-app-global \
+            --query "Stacks[0].Outputs[?OutputKey=='CloudFrontId'].OutputValue" \
+            --output text)
+          aws cloudfront create-invalidation --distribution-id $CF_ID --paths "/*"

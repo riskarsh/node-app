@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Global CloudFront distribution with multi-region origins
+
+Parameters:
+  ALB1DNS:
+    Type: String
+    Description: ALB DNS in us-east-1
+  ALB2DNS:
+    Type: String
+    Description: ALB DNS in us-east-2
+  ALB3DNS:
+    Type: String
+    Description: ALB DNS in us-west-1
+  ALB4DNS:
+    Type: String
+    Description: ALB DNS in us-west-2
+
+Resources:
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        HttpVersion: http2and3
+        Origins:
+          - Id: alb1
+            DomainName: !Ref ALB1DNS
+            CustomOriginConfig:
+              HTTPPort: 80
+              OriginProtocolPolicy: http-only
+          - Id: alb2
+            DomainName: !Ref ALB2DNS
+            CustomOriginConfig:
+              HTTPPort: 80
+              OriginProtocolPolicy: http-only
+          - Id: alb3
+            DomainName: !Ref ALB3DNS
+            CustomOriginConfig:
+              HTTPPort: 80
+              OriginProtocolPolicy: http-only
+          - Id: alb4
+            DomainName: !Ref ALB4DNS
+            CustomOriginConfig:
+              HTTPPort: 80
+              OriginProtocolPolicy: http-only
+        DefaultCacheBehavior:
+          TargetOriginId: alb1
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD]
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+        OriginGroups:
+          Quantity: 1
+          Items:
+            - Id: MultiRegionGroup
+              FailoverCriteria:
+                StatusCodes: [500, 502, 503, 504]
+              Members:
+                - OriginId: alb1
+                - OriginId: alb2
+                - OriginId: alb3
+                - OriginId: alb4
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
+Outputs:
+  CloudFrontDomain:
+    Value: !GetAtt CloudFrontDistribution.DomainName
+    Description: CloudFront domain name
+  CloudFrontId:
+    Value: !Ref CloudFrontDistribution
+    Description: CloudFront distribution ID
