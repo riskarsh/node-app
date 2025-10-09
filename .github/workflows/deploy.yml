@@ -19,6 +19,9 @@ jobs:
   # 1. Build AMIs with Packer
   packer:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
