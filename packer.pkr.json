@@ -31,7 +31,6 @@
         "instance_type": "t3.micro",
         "ssh_username": "ubuntu",
         "ami_name": "node-app-ubuntu24-{{timestamp}}",
-
         "ami_regions": ["us-east-1", "us-east-2", "us-west-2"]
       }
     }
@@ -39,13 +38,10 @@
 
   "build": {
     "sources": ["source.amazon-ebs.ubuntu-node-app"],
-
     "provisioner": [
       {
         "shell": {
-          "inline": [
-            "mkdir -p /tmp/app"
-          ]
+          "inline": ["mkdir -p /tmp/app"]
         }
       },
       {
@@ -58,6 +54,12 @@
         "shell": {
           "script": "scripts/setup.sh"
         }
+      }
+    ],
+    "post-processors": [
+      {
+        "type": "manifest",
+        "output": "manifest.json"
       }
     ]
   }
