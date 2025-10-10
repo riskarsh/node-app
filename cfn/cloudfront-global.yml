@@ -26,22 +26,26 @@ Resources:
           - Id: alb1
             DomainName: !Ref ALB1DNS
             CustomOriginConfig:
-              HTTPPort: 80
+              HTTPPort: 3000
+              HTTPSPort: 3000
               OriginProtocolPolicy: http-only
           - Id: alb2
             DomainName: !Ref ALB2DNS
             CustomOriginConfig:
-              HTTPPort: 80
+              HTTPPort: 3000
+              HTTPSPort: 3000
               OriginProtocolPolicy: http-only
           - Id: alb3
             DomainName: !Ref ALB3DNS
             CustomOriginConfig:
-              HTTPPort: 80
+              HTTPPort: 3000
+              HTTPSPort: 3000
               OriginProtocolPolicy: http-only
           - Id: alb4
             DomainName: !Ref ALB4DNS
             CustomOriginConfig:
-              HTTPPort: 80
+              HTTPPort: 3000
+              HTTPSPort: 3000
               OriginProtocolPolicy: http-only
         DefaultCacheBehavior:
           TargetOriginId: alb1
