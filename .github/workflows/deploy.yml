@@ -57,6 +57,9 @@ jobs:
   deploy-regional:
     needs: packer
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     strategy:
       matrix:
         region: [us-east-1, us-east-2, us-west-1, us-west-2]
@@ -82,6 +85,9 @@ jobs:
   deploy-global:
     needs: deploy-regional
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     if: github.event.inputs.first_deploy == 'true'
     steps:
       - uses: actions/checkout@v4
@@ -114,6 +120,9 @@ jobs:
   invalidate-cache:
     needs: deploy-regional
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     if: github.event.inputs.first_deploy == 'false'
     steps:
       - name: Configure AWS credentials
