@@ -56,11 +56,10 @@
         }
       }
     ],
-    "post-processors": [
-      {
-        "type": "manifest",
+    "post-processor": {
+      "manifest": {
         "output": "manifest.json"
       }
-    ]
+    }
   }
 }
