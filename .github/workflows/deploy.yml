@@ -87,7 +87,7 @@ jobs:
             --template-file cfn/app-regional.yml \
             --stack-name node-app-${{ matrix.region }} \
             --capabilities CAPABILITY_NAMED_IAM \
-            --parameter-overrides AMIId=$AMI_ID VPCId=$VPC_ID SubnetIds=\"$SUBNET_IDS\"
+            --parameter-overrides AMIId=$AMI_ID VPCId=$VPC_ID SubnetIds=$SUBNET_IDS
 
 
   # 3. Deploy Global CloudFront
