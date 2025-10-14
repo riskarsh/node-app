@@ -54,7 +54,7 @@ jobs:
         id: ami
 
         run: |
-          AMI_JSON=$(jq -rc '[.builds[] | {region: .artifact_id | split(":")[0], ami: .artifact_id | split(":")[1]}]' manifest.json)
+          AMI_JSON=$(jq -rc '[ .builds[] | .artifact_id | split(",") | .[] | split(":") | {region: .[0], ami: .[1]} ]' manifest.json)
           echo "ami_list=$AMI_JSON" >> $GITHUB_OUTPUT
 
   # 2. Deploy regional stacks
