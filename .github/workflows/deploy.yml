@@ -22,6 +22,10 @@ jobs:
     permissions:
       id-token: write
       contents: read
+
+    outputs:
+      ami_list: ${{ steps.ami.outputs.ami_list }}
+
     steps:
       - uses: actions/checkout@v4
 
