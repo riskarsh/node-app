@@ -107,16 +107,6 @@ Resources:
         PauseTime: PT5M
         WaitOnResourceSignals: false
 
-  InstanceRefreshRolling:
-    Type: AWS::AutoScaling::InstanceRefresh
-    Properties:
-      AutoScalingGroupName: !Ref AutoScalingGroup
-      Strategy: Rolling
-      Preferences:
-        MinHealthyPercentage: 50
-        InstanceWarmup: 300
-      Triggers:
-        - LaunchTemplate
 
 Outputs:
   LoadBalancerDNS:
