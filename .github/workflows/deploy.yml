@@ -75,11 +75,16 @@ jobs:
       - name: Deploy/Update Regional Stack
         run: |
           AMI_ID=$(echo '${{ needs.packer.outputs.ami_list }}' | jq -r ".[] | select(.region==\"${{ matrix.region }}\") | .ami")
+          VPC_ID=$(aws ec2 describe-vpcs --filters Name=is-default,Values=true --query "Vpcs[0].VpcId" --output text)
+          SUBNET_IDS=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" --query "Subnets[].SubnetId" | jq -r 'join(",")')
+          echo "Deploying in ${{ matrix.region }} with AMI: $AMI_ID, VPC: $VPC_ID, Subnets: $SUBNET_IDS"
+
           aws cloudformation deploy \
             --template-file cfn/app-regional.yml \
             --stack-name node-app-${{ matrix.region }} \
             --capabilities CAPABILITY_NAMED_IAM \
-            --parameter-overrides AMIId=$AMI_ID
+            --parameter-overrides AMIId=$AMI_ID VPCId=$VPC_ID SubnetIds=\"$SUBNET_IDS\"
+
 
   # 3. Deploy Global CloudFront
   deploy-global:
@@ -100,21 +105,20 @@ jobs:
 
       - name: Deploy Global CloudFront Stack
         run: |
-          # Fetch ALB DNS names from regional stacks
-          ALBS=$(for r in us-east-1 us-east-2 us-west-1 us-west-2; do
-            dns=$(aws cloudformation describe-stacks --stack-name node-app-$r \
-              --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNS'].OutputValue" \
-              --output text --region $r)
-            echo "$r=$dns"
-          done)
+          ALB1_DNS=$(aws cloudformation describe-stacks --stack-name node-app-us-east-1 --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNS'].OutputValue" --output text --region us-east-1)
+          ALB2_DNS=$(aws cloudformation describe-stacks --stack-name node-app-us-east-2 --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNS'].OutputValue" --output text --region us-east-2)
+          ALB3_DNS=$(aws cloudformation describe-stacks --stack-name node-app-us-west-1 --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNS'].OutputValue" --output text --region us-west-1)
+          ALB4_DNS=$(aws cloudformation describe-stacks --stack-name node-app-us-west-2 --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNS'].OutputValue" --output text --region us-west-2)
 
-          # Save ALBs into params file
-          echo $ALBS
+          PARAMS="ALB1DNS=$ALB1_DNS ALB2DNS=$ALB2_DNS ALB3DNS=$ALB3_DNS ALB4DNS=$ALB4_DNS"
+          echo "CloudFront Parameters: $PARAMS"
 
           aws cloudformation deploy \
             --template-file cfn/cloudfront-global.yml \
             --stack-name node-app-global \
-            --capabilities CAPABILITY_NAMED_IAM
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides $PARAMS
+
 
   # 4. CloudFront Cache Invalidation
   invalidate-cache:
