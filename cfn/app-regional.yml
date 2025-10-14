@@ -100,16 +100,23 @@ Resources:
       DesiredCapacity: 2
       TargetGroupARNs:
         - !Ref TargetGroup
-      InstanceRefresh:
-        Strategy: Rolling
-        Preferences:
-          MinHealthyPercentage: 50
-          InstanceWarmup: 300
     UpdatePolicy:
       AutoScalingRollingUpdate:
         MinInstancesInService: 1
         MaxBatchSize: 1
         PauseTime: PT5M
+        WaitOnResourceSignals: false
+
+  InstanceRefreshRolling:
+    Type: AWS::AutoScaling::InstanceRefresh
+    Properties:
+      AutoScalingGroupName: !Ref AutoScalingGroup
+      Strategy: Rolling
+      Preferences:
+        MinHealthyPercentage: 50
+        InstanceWarmup: 300
+      Triggers:
+        - LaunchTemplate
 
 Outputs:
   LoadBalancerDNS:
