@@ -48,7 +48,7 @@ Resources:
               HTTPSPort: 3000
               OriginProtocolPolicy: http-only
         DefaultCacheBehavior:
-          TargetOriginId: alb1
+          TargetOriginId: MultiRegionGroup
           ViewerProtocolPolicy: redirect-to-https
           AllowedMethods: [GET, HEAD, OPTIONS]
           CachedMethods: [GET, HEAD]
@@ -61,15 +61,16 @@ Resources:
           Items:
             - Id: MultiRegionGroup
               FailoverCriteria:
-                StatusCodes: [500, 502, 503, 504]
+                StatusCodes:
+                  Quantity: 4
+                  Items: [500, 502, 503, 504]
               Members:
-                - OriginId: alb1
-                - OriginId: alb2
-                - OriginId: alb3
-                - OriginId: alb4
-        ViewerCertificate:
-          CloudFrontDefaultCertificate: true
-
+                Quantity: 4
+                Items:
+                  - OriginId: alb1
+                  - OriginId: alb2
+                  - OriginId: alb3
+                  - OriginId: alb4
 Outputs:
   CloudFrontDomain:
     Value: !GetAtt CloudFrontDistribution.DomainName
