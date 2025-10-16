@@ -65,12 +65,12 @@ Resources:
                   Quantity: 4
                   Items: [500, 502, 503, 504]
               Members:
-                Quantity: 4
+                Quantity: 2
                 Items:
                   - OriginId: alb1
                   - OriginId: alb2
-                  - OriginId: alb3
-                  - OriginId: alb4
+#                  - OriginId: alb3
+#                  - OriginId: alb4
 Outputs:
   CloudFrontDomain:
     Value: !GetAtt CloudFrontDistribution.DomainName
